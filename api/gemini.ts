@@ -86,6 +86,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
     res.status(200).json({ text, raw: data });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || String(err) });
+    const safeError = {
+      type: 'GeminiAPIError',
+      timestamp: new Date().toISOString()
+    };
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Gemini API error:', safeError, err.message);
+    }
+    
+    res.status(500).json({ 
+      error: process.env.NODE_ENV === 'production' 
+        ? 'An error occurred processing your request'
+        : err.message || String(err)
+    });
   }
 }

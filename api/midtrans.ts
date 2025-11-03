@@ -21,12 +21,27 @@ const getSupabaseClient = () => {
   return createClient(supabaseUrl, supabaseServiceKey);
 };
 
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+// CORS headers - Restrict to production domain
+const getAllowedOrigin = (origin?: string) => {
+  const allowedOrigins = [
+    'https://travo-mate.vercel.app',
+    'https://travo-mate.com', // Add your custom domain if applicable
+    process.env.APP_URL || 'http://localhost:8080'
+  ];
+  
+  if (process.env.NODE_ENV === 'development') {
+    allowedOrigins.push('http://localhost:8080', 'http://localhost:5173');
+  }
+  
+  return origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+};
+
+const corsHeaders = (origin?: string) => ({
+  'Access-Control-Allow-Origin': getAllowedOrigin(origin),
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+  'Access-Control-Allow-Credentials': 'true',
+});
 
 // Initialize Midtrans Snap client
 const getSnapClient = () => {
@@ -59,10 +74,12 @@ const getCoreApiClient = () => {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Set CORS headers with origin validation
+  const origin = req.headers.origin;
+  const headers = corsHeaders(origin);
+  Object.entries(headers).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -88,10 +105,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
     }
   } catch (error: any) {
-    console.error('Midtrans API error:', error);
+    // Log error safely without exposing sensitive data
+    const safeError = {
+      type: 'MidtransAPIError',
+      timestamp: new Date().toISOString(),
+      action: req.query.action
+    };
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Midtrans API error:', safeError, error.message);
+    }
+    
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
+      message: process.env.NODE_ENV === 'production' 
+        ? 'An error occurred processing your request' 
+        : error.message,
     });
   }
 }
@@ -240,9 +269,8 @@ async function handleNotification(req: VercelRequest, res: VercelResponse) {
 
     console.log('Notification received:', {
       type: notificationType,
-      order_id: notification.order_id,
-      subscription_id: notification.subscription_id,
-      account_id: notification.account_id,
+      order_id: notification.order_id ? '***' + notification.order_id.slice(-4) : 'N/A',
+      timestamp: new Date().toISOString(),
     });
 
     // Route to appropriate handler based on notification type
@@ -285,10 +313,11 @@ async function handleTransactionNotification(notification: any, res: VercelRespo
     } = statusResponse;
 
     console.log('Transaction notification:', {
-      orderId: order_id,
+      orderId: order_id ? '***' + order_id.slice(-4) : 'N/A',
       transactionStatus: transaction_status,
       fraudStatus: fraud_status,
       paymentType: payment_type,
+      timestamp: new Date().toISOString(),
     });
 
     // Determine final status
@@ -372,9 +401,11 @@ async function handleTransactionNotification(notification: any, res: VercelRespo
               .single();
 
             if (bookingError) {
-              console.error('Failed to create booking:', bookingError);
+              if (process.env.NODE_ENV !== 'production') {
+                console.error('Failed to create booking:', bookingError.message);
+              }
             } else {
-              console.log(`✅ Booking created for order ${order_id}:`, booking);
+              console.log(`✅ Booking created for order ***${order_id.slice(-4)}`);
               
               // Also create purchase record if tickets table exists
               try {
@@ -389,20 +420,20 @@ async function handleTransactionNotification(notification: any, res: VercelRespo
                   });
                 
                 if (purchaseError) {
-                  console.error('Failed to create purchase:', purchaseError);
+                  if (process.env.NODE_ENV !== 'production') {
+                    console.error('Failed to create purchase:', purchaseError.message);
+                  }
                 } else {
-                  console.log(`✅ Purchase record created for order ${order_id}`);
+                  console.log(`✅ Purchase record created for order ***${order_id.slice(-4)}`);
                 }
               } catch (purchaseErr) {
-                console.error('Purchase creation error:', purchaseErr);
+                if (process.env.NODE_ENV !== 'production') {
+                  console.error('Purchase creation error');
+                }
               }
             }
           } else {
-            console.error('Missing destination_id or user_id:', {
-              destinationId,
-              userId: transaction.user_id,
-              transaction
-            });
+            console.error('Missing destination_id or user_id for order ***' + order_id.slice(-4));
           }
         }
       }
@@ -411,7 +442,7 @@ async function handleTransactionNotification(notification: any, res: VercelRespo
       // Continue - don't fail the notification response
     }
     
-    console.log(`Transaction ${order_id} status updated to: ${finalStatus}`);
+    console.log(`Transaction ***${order_id.slice(-4)} status updated to: ${finalStatus}`);
 
     return res.status(200).json({
       success: true,
