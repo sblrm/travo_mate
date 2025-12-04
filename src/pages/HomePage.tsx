@@ -22,19 +22,6 @@ const HomePage = () => {
     }
   }, [destinations]);
 
-  const culturalImages = [
-    '/culture-uploads/Desa Adat Wae Rebo.jpg', 
-    '/culture-uploads/Tana Toraja.png', 
-    '/culture-uploads/Candi Borobudur.png', 
-    '/culture-uploads/Candi Prambanan.jpg', 
-    '/culture-uploads/Keraton Yogyakarta.jpg', 
-    '/culture-uploads/Kampung Naga.jpg', 
-    '/culture-uploads/Batik Trusmi.png', 
-    '/culture-uploads/Istana Maimun.png', 
-    '/culture-uploads/Desa Adat Penglipuran.jpeg', 
-    '/culture-uploads/Desa Tenganan Pegringsingan.jpg'  
-  ];
-
   return (
     <div>
       {/* Hero Section */}
@@ -87,13 +74,13 @@ const HomePage = () => {
           ) : (
             <Carousel className="w-full">
               <CarouselContent>
-                {featuredDestinations.map((destination, index) => (
+                {featuredDestinations.map((destination) => (
                   <CarouselItem key={destination.id} className="md:basis-1/2 lg:basis-1/3">
                     <Link to={`/destinations/${destination.id}`}>
                       <Card className="overflow-hidden h-full transition-all hover:shadow-lg">
                         <div className="relative h-64 overflow-hidden">
                           <img
-                            src={culturalImages[index % culturalImages.length]}
+                            src={destination.image}
                             alt={destination.name}
                             className="w-full h-full object-cover transition-transform hover:scale-105"
                           />

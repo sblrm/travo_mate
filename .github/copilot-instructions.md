@@ -1,397 +1,194 @@
-# TravoMate AI Coding Agent Instructions
+# TravoMate - AI Coding Agent Instructions
 
 ## Project Overview
-**TravoMate** is a modern cultural heritage travel planner for Indonesia built with React + TypeScript + Vite, featuring AI-powered trip planning (Gemini), real-time routing (OpenRouteService), payment processing (Midtrans), and ML cost predictions (TensorFlow.js). The app supports guest mode, multi-language (5 languages), admin dashboard, and booking/refund system.
+TravoMate is a React + TypeScript SPA for exploring Indonesian cultural heritage sites with AI-powered trip planning, dynamic route optimization, and payment processing. Stack: Vite, Supabase (PostgreSQL + PostGIS), Tailwind + shadcn/ui, Gemini AI, Midtrans payments.
 
-## Tech Stack & Architecture
+## Architecture & Data Flow
 
-### Frontend
-- **React 18** with TypeScript (strict mode)
-- **Vite** for build tooling (NOT Create React App)
-- **React Router v6** for navigation
-- **shadcn/ui** + **Radix UI** for components (DO NOT install MUI/Ant Design)
-- **Tailwind CSS** for styling (utility-first approach)
-- **i18next** for internationalization (5 languages: id, en, zh, ja, ko)
+### Core Services
+- **Backend**: Supabase (auth, PostgreSQL w/ PostGIS extension for geospatial queries)
+- **State Management**: React Context (`AuthContext`, `MapContext`, `DestinationsContext`) + `@tanstack/react-query`
+- **Routing**: React Router v6 with nested routes (`/admin`, `/profile/*`, `/wishlist`)
+- **API Proxies**: Serverless functions in `/api` (Gemini AI, Midtrans payments, OpenRouteService) to hide API keys
 
-### Backend & Services
-- **Supabase** (PostgreSQL + PostGIS + Storage + Auth + RLS)
-- **Serverless Functions** in `api/` for Vercel deployment
-- **OpenRouteService API** for real-time routing with 1-hour cache
-- **Midtrans** payment gateway with webhook handlers
-- **Gemini AI** for chat-based trip planning (server-side proxy)
+### Key Database Tables
+- `destinations` - Cultural sites with PostGIS `geography` column for spatial queries
+- `profiles` - User data with `role` enum (`user`, `admin`, `superadmin`) for RBAC
+- `bookings`, `transactions`, `reviews` - Payment and engagement tracking
+- `wishlists`, `wishlist_items` - User-created trip collections with sharing
+- `trip_data`, `prediction_logs` - ML training data & inference logs
 
-### Key Services Location
-All service files live in `src/services/`:
-- `routePlanner.ts` - A* algorithm for optimal route finding
-- `dynamicPricing.ts` - Rule-based pricing with time/traffic multipliers
-- `openRouteService.ts` - ORS API integration with Haversine fallback
-- `mlPrediction.ts` - TensorFlow.js browser-side inference
-- `adminService.ts` - Admin CRUD operations with RLS checks
-- `paymentService.ts` - Midtrans integration
-- `wishlistService.ts` - Wishlist management with social sharing
+### Authentication Flow
+1. Supabase Auth handles login/register/OAuth (Google)
+2. `handle_new_user_profile()` trigger auto-creates profile on signup
+3. Guest mode available (stored in localStorage, bypasses auth)
+4. Admin access: Check `profiles.role` via `is_admin()` RPC
+5. RLS policies enforce row-level security on all tables
 
-## Critical Development Workflows
+## Development Commands
 
-### Running the App
 ```powershell
-# Install dependencies (prefer Bun for speed)
-bun install  # or: npm install
+# Prefer Bun over npm (faster installs/builds)
+bun install           # Install dependencies
+bun run dev           # Start dev server (localhost:8080)
+bun run build         # Production build
+bun run lint          # ESLint check
 
-# Development server
-bun run dev  # Opens on http://localhost:8080
+# Database testing
+bun run test:connection     # Verify Supabase connection
+bun run test:destinations   # Test destination queries
 
-# Build for production
-bun run build  # Output: dist/
-
-# Preview production build
-bun run preview
+# Setup helpers
+bun run setup:verify        # PowerShell: Run verify-supabase.ps1
+bun run setup:check         # Node: Check env vars and connections
+bun run import:destinations # Bulk import from CSV/JSON
 ```
 
-### Database Operations
+## Critical Conventions
+
+### File Structure Patterns
+- **Pages**: `src/pages/[PageName].tsx` - Route components, compose services
+- **Services**: `src/services/*.ts` - Business logic (e.g., `routePlanner.ts`, `adminService.ts`)
+- **Context**: `src/contexts/*Context.tsx` - Global state (wrap in `App.tsx`)
+- **Components**: `src/components/[feature]/` - Organized by feature (map, planner, admin, wishlist)
+- **API Routes**: `api/*.ts` - Vercel serverless functions (VercelRequest/VercelResponse types)
+
+### Environment Variables
+**Required in `.env.local`:**
+```bash
+VITE_SUPABASE_URL=            # Supabase project URL
+VITE_SUPABASE_ANON_KEY=       # Public anon key
+VITE_GEMINI_API_KEY=          # For client-side AI features (optional)
+VITE_MIDTRANS_CLIENT_KEY=     # Midtrans Snap popup (client-safe)
+VITE_MIDTRANS_ENVIRONMENT=sandbox  # 'sandbox' or 'production'
+
+# Server-side only (Vercel env vars, NEVER prefix with VITE_)
+GEMINI_API_KEY=               # Used by /api/gemini
+MIDTRANS_SERVER_KEY=          # Used by /api/midtrans
+MIDTRANS_MERCHANT_ID=         # Midtrans merchant
+SUPABASE_SERVICE_ROLE_KEY=    # For /api/midtrans webhook (bypasses RLS)
+APP_URL=                      # Payment redirect base URL
+OPENROUTE_API_KEY=            # Optional: Enhanced route calculations
+```
+
+### Route Planning Algorithm
+**Implementation**: A* pathfinding in `src/services/routePlanner.ts`
+- **Modes**: `fastest`, `cheapest`, `balanced` (user-selectable)
+- **Cost Functions**: 
+  - Distance + duration from OpenRouteService API (1-hour cache)
+  - Dynamic pricing factors: time-of-day, day-of-week, traffic, fuel, tolls (`dynamicPricing.ts`)
+- **Fallback**: Haversine formula if API fails
+- **Integration**: Called from `PlannerPage.tsx` → displays route on Leaflet map
+
+### Admin Dashboard Patterns
+**Location**: `src/pages/admin/`, protected by `isAdmin()` check
+- **CRUD**: `adminService.ts` - `createDestination()`, `updateDestination()`, `deleteDestination()`
+- **Image Upload**: Direct to Supabase Storage (`culture-uploads` bucket) with RLS policies
+- **Search/Filter**: Client-side on `AdminDashboard` (real-time, no API calls)
+- **Pagination**: Configurable items per page (5-100), smart ellipsis for pages > 7
+- **Validation**: Zod schemas in forms (`react-hook-form` + `@hookform/resolvers`)
+
+### Payment Flow (Midtrans)
+1. **Checkout**: User selects destination → `/checkout/:id` → Creates booking in DB (status: `pending`)
+2. **Payment Init**: `paymentService.ts` calls `/api/midtrans` → Returns `snap_token`
+3. **Snap Popup**: Client loads Midtrans Snap with `VITE_MIDTRANS_CLIENT_KEY`
+4. **Webhook**: `/api/midtrans` handles notifications → Updates transaction + booking status
+5. **Redirect**: User returns to `/payment/finish?order_id=...&status=...`
+6. **Critical**: Webhook needs `SUPABASE_SERVICE_ROLE_KEY` to bypass RLS when auto-confirming bookings
+
+### Internationalization (i18n)
+- **Library**: `react-i18next` with `i18next-browser-languagedetector`
+- **Config**: `src/i18n/config.ts` - Default: `id` (Indonesian), fallback: `id`
+- **Translations**: `src/locales/{id,en,zh,ja,ko}.json`
+- **Usage**: `const { t } = useTranslation(); t('key.path')`
+- **Language Switcher**: `LanguageSwitcher.tsx` in header, saves to localStorage
+
+### Component Library (shadcn/ui)
+- **Source**: `src/components/ui/` - Radix UI primitives + Tailwind
+- **Theme**: CSS variables in `src/index.css` (light/dark mode via `next-themes`)
+- **Dark Mode**: `ThemeProvider` in `App.tsx`, toggle via `ThemeToggle.tsx`
+- **Customization**: Modify `tailwind.config.ts` theme.extend for colors/animations
+
+## Common Pitfalls & Solutions
+
+### Supabase PostGIS Queries
+**Problem**: `location` column is geography type, requires `ST_` functions
+**Solution**: Use `ST_DWithin`, `ST_Distance`, `ST_SetSRID`, `ST_MakePoint` for spatial queries
+**Example**:
+```typescript
+const { data } = await supabase.rpc('destinations_within_radius', {
+  lat: -7.797068, lng: 110.370529, radius_km: 50
+});
+```
+
+### RLS Policy Debugging
+**Problem**: Query returns empty even when data exists
+**Solution**: Check policies in Supabase Dashboard → Authentication → Policies. Common fix: Add `anon` role or adjust `USING` clause
+**Test**: Use service_role key temporarily to bypass RLS (NEVER in production)
+
+### API Route CORS Errors
+**Problem**: `fetch('/api/gemini')` blocked by CORS in production
+**Solution**: `vercel.json` sets `Access-Control-Allow-Origin` for `/api/*`. Ensure `APP_URL` matches deployed domain
+**Dev**: Use `localhost:8080` in `APP_URL` for local testing
+
+### Midtrans Webhook Not Firing
+**Problem**: Payments succeed but bookings stay `pending`
+**Checklist**:
+1. Verify `SUPABASE_SERVICE_ROLE_KEY` in Vercel env vars
+2. Check webhook URL in Midtrans dashboard: `https://your-domain.vercel.app/api/midtrans`
+3. Test with Midtrans simulator: https://simulator.sandbox.midtrans.com/
+4. Check Vercel function logs for errors
+
+### ML Pipeline (TensorFlow.js)
+**Training**: Run `ml_pipeline/train_model.py` → Exports to `public/tfjs_model/`
+**Inference**: `src/services/mlPrediction.ts` loads model, predicts trip costs
+**Hybrid**: Falls back to rule-based (`dynamicPricing.ts`) if model unavailable
+**Data Collection**: Auto-logs trips in `trip_data` table via `mlDataCollection.ts`
+
+## Testing & Debugging
+
+### Quick Checks
 ```powershell
 # Test Supabase connection
 bun run test:connection
 
-# Verify destinations data
-bun run test:destinations
-
-# Check setup completeness
+# Verify environment setup
 bun run setup:check
 
-# Import destinations from JSON/CSV
-bun run import:destinations scripts/destinations-template.json
+# Check admin role assignment
+# In Supabase SQL Editor:
+SELECT id, email, role FROM auth.users 
+JOIN public.profiles ON auth.users.id = public.profiles.id;
 ```
 
-### Admin Dashboard Access
-1. Run migration: `supabase/migrations/add_admin_role.sql`
-2. Manually set admin role in Supabase SQL Editor:
-   ```sql
-   UPDATE public.profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'admin@example.com');
-   ```
-3. Access at `/admin` route (auto-protected by RLS + client-side checks)
-
-## Project-Specific Conventions
-
-### File Structure Patterns
-- **Pages:** `src/pages/` - Route components (e.g., `HomePage.tsx`, `PlannerPage.tsx`)
-- **Components:** `src/components/` - Reusable UI components (shadcn/ui based)
-- **Contexts:** `src/contexts/` - Global state (Auth, Map, Destinations, Theme)
-- **Services:** `src/services/` - Business logic and API integrations
-- **Hooks:** `src/hooks/` - Custom React hooks
-- **Locales:** `src/locales/` - Translation files (id.json, en.json, etc.)
-- **API Routes:** `api/` - Vercel serverless functions (gemini.ts, midtrans.ts)
-
-### Authentication & Authorization
-**Auth Modes:**
-- Guest mode: `user.id = 'guest'`, stored in localStorage, NO database writes
-- Authenticated: Supabase auth with JWT, profile in `profiles` table
-- Admin: `profiles.role IN ('admin', 'superadmin')` checked via `isAdmin()` function
-
-**RLS Policies Pattern:**
-```sql
--- Public read for destinations
-CREATE POLICY "Destinations are viewable by everyone" ON destinations FOR SELECT USING (true);
-
--- Admin-only write operations
-CREATE POLICY "Admin can insert destinations" ON destinations FOR INSERT USING (public.is_admin());
-
--- User-owned data
-CREATE POLICY "Users can view own bookings" ON bookings FOR SELECT USING (auth.uid() = user_id);
-```
-
-**Always check both:**
-1. Client-side: `const { isAuthenticated, isGuest } = useAuth();`
-2. Server-side: RLS policies enforce at database level
-
-### Routing & Data Flow
-**Route Planning Pipeline:**
-```
-User Location → PlannerPage → routePlanner.ts (A* algorithm)
-                     ↓
-             openRouteService.ts (API + cache) + dynamicPricing.ts
-                     ↓
-             PlannedRouteCard.tsx (display with cost breakdown)
-```
-
-**Data Sources Priority:**
-1. Real-time ORS API (dataSource: 'ors')
-2. In-memory cache (1-hour TTL)
-3. Haversine formula fallback (dataSource: 'fallback')
-
-### Environment Variables Pattern
-```bash
-# Client-side (VITE_ prefix, embedded in bundle)
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGc...
-VITE_MIDTRANS_CLIENT_KEY=SB-Mid-client-xxx
-VITE_MIDTRANS_ENVIRONMENT=sandbox
-VITE_ORS_API_KEY=xxx
-
-# Server-side ONLY (NO VITE_ prefix)
-GEMINI_API_KEY=xxx           # Used in api/gemini.ts
-MIDTRANS_SERVER_KEY=xxx      # Used in api/midtrans.ts
-SUPABASE_SERVICE_ROLE_KEY=xxx  # For webhook bypass RLS
-APP_URL=https://travo-mate.vercel.app  # Payment redirect base
-```
-
-**NEVER add VITE_ prefix to sensitive server keys!**
-
-## Integration Points & External Dependencies
-
-### Supabase Integration
-- **Schema:** See `supabase/complete-setup.sql` for full schema
-- **PostGIS:** Required for geographical queries (`location geography(Point, 4326)`)
-- **Storage:** `destination-images` bucket with public read policy
-- **Auth:** OAuth providers (Google) configured in Supabase Dashboard
-- **RLS:** All tables have row-level security enabled
-
-**Key Tables:**
-- `destinations` - Cultural heritage sites (public read, admin write)
-- `bookings` - User reservations with status workflow
-- `profiles` - User metadata with `role` column for admin
-- `wishlists` - User collections with social sharing via `share_token`
-- `trip_data` + `prediction_logs` - ML training data
-
-### OpenRouteService API
-- **Free Tier:** 2,000 requests/day, 40 req/min
-- **Endpoints:** Matrix API (batch), Directions API (detailed routes)
-- **Cache Strategy:** In-memory Map with 1-hour TTL, auto-cleanup every 5 mins
-- **Fallback:** Haversine great-circle distance when API fails
-- **Docs:** `docs/EXTERNAL_APIS.md`
-
-### Midtrans Payment Gateway
-- **Sandbox Mode:** Testing with fake credit cards
-- **Snap Integration:** Popup payment UI via `window.snap.pay()`
-- **Webhook:** `api/midtrans.ts` handles notification callbacks
-- **Transaction Flow:** Create snap token → User pays → Webhook updates booking status
-- **Docs:** `docs/MIDTRANS_INTEGRATION.md`
-
-### Gemini AI Integration
-- **Proxy:** `api/gemini.ts` (server-side API key, rate-limited per IP)
-- **Model:** `gemini-2.5-flash` for trip planning chat
-- **Context:** Destinations data injected into prompts
-- **Rate Limit:** 20 requests/IP/minute (in-memory, per serverless instance)
-
-## Common Patterns & Anti-Patterns
-
-### ✅ DO:
-```typescript
-// Use shadcn/ui components
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-
-// Use i18next for translations
-import { useTranslation } from 'react-i18next';
-const { t } = useTranslation();
-<h1>{t('home.hero.title')}</h1>
-
-// Check admin status
-const isUserAdmin = await isAdmin();
-if (!isUserAdmin) navigate('/');
-
-// Handle both guest and authenticated users
-if (isGuest) {
-  toast.error(t('auth.guestRestriction'));
-  return;
-}
-
-// Use hybridPrediction for ML + fallback
-const estimate = await getHybridPrediction(routeData, conditions);
-```
-
-### ❌ DON'T:
-```typescript
-// Don't install new UI libraries (we use shadcn/ui)
-import { Button } from '@mui/material'; // ❌
-
-// Don't hardcode strings (use i18next)
-<h1>Welcome to TravoMate</h1> // ❌
-
-// Don't expose server keys in client
-const serverKey = import.meta.env.VITE_MIDTRANS_SERVER_KEY; // ❌
-
-// Don't assume authentication (always check)
-const userId = user.id; // ❌ (could be null or 'guest')
-
-// Don't bypass RLS with service_role key on client
-const { data } = await supabase.auth.admin.listUsers(); // ❌
-```
-
-## Admin Dashboard Specifics
-- **Route Protection:** Automatic redirect in `useEffect` via `isAdmin()` check
-- **CRUD Operations:** All mutations via `adminService.ts` with RLS enforcement
-- **Search/Filter/Pagination:** Client-side filtering (no API calls), see `docs/ADMIN_SEARCH_FILTER_PAGINATION.md`
-- **Image Upload:** Direct to Supabase Storage `destination-images` bucket
-- **Form Validation:** Zod schemas with real-time error display
-- **Statistics:** Count queries for total destinations/reviews/bookings
-
-## ML Pipeline
-- **Training:** Python script `ml_pipeline/train_model.py` (Random Forest → TensorFlow.js export)
-- **Inference:** Browser-side TensorFlow.js via `mlPrediction.ts`
-- **Data Collection:** Automatic via `mlDataCollection.ts` on every route plan
-- **Hybrid Logic:** `hybridPrediction.ts` uses ML if confidence > 0.7, else rule-based
-- **Models Location:** `public/models/` (model.json, weights, metadata.json)
-- **Docs:** `docs/ML_PIPELINE.md`
-
-## Guest Mode Implementation
-**Key Principle:** Guest users see full UI but cannot perform database writes.
-
-```typescript
-// Check in components
-const { isGuest } = useAuth();
-
-// Block actions
-const handleBooking = () => {
-  if (isGuest) {
-    toast.error('Please login to book tickets');
-    return;
-  }
-  // ... proceed
-};
-```
-
-**Guest user object:**
-```typescript
-{
-  id: 'guest',
-  name: 'Guest User',
-  email: 'guest@travomate.com',
-  isGuest: true
-}
-```
-
-**LocalStorage flag:** `guestMode: 'true'`  
-**RLS Protection:** All policies check `auth.uid()` which fails for guest  
-**Docs:** `docs/GUEST_MODE.md`
-
-## Booking & Refund System
-**Booking States:**
-- `pending_payment` → `paid` → `confirmed` → `used`
-- Alternative: `paid` → `refund_requested` → `refunded`
-- Cancellation: `paid` → `cancelled`
-
-**Refund Rules:**
-- ≥7 days before visit: 100% refund
-- 3-6 days before: 50% refund
-- <3 days before: 25% refund
-- Check via `checkRefundEligibility(bookingId)` (RPC or manual fallback)
-
-**Docs:** `docs/BOOKING_REFUND_SYSTEM.md`
-
-## Testing & Debugging
-
-### Common Issues
-**"API key not found"** in ORS:
-- Check `VITE_ORS_API_KEY` in `.env.local`
-- Verify API key is valid at openrouteservice.org
-
-**Admin access denied:**
-- Run `add_admin_role.sql` migration first
-- Manually set `role = 'admin'` in profiles table
-- Clear browser cache and re-login
-
-**Payment webhook not working:**
-- Ensure `SUPABASE_SERVICE_ROLE_KEY` set in Vercel
-- Check webhook URL in Midtrans dashboard matches `api/midtrans.ts`
-- Verify `APP_URL` environment variable for redirects
-
-**Translation missing:**
-- Add key to all 5 locale files (id.json, en.json, zh.json, ja.json, ko.json)
-- Follow nested structure: `{ "section": { "subsection": "value" } }`
-
-**CORS errors after security update:**
-- Verify `APP_URL` matches production domain in Vercel env vars
-- Check `allowedOrigins` array in `api/midtrans.ts` and `api/gemini.ts`
-- Clear browser cache and retry
-
-### Useful Commands
-```powershell
-# Check all errors
-npm run lint
-
-# View Supabase logs
-# (Go to Supabase Dashboard > Logs)
-
-# Test ML pipeline
-# python ml_pipeline/train_model.py
-
-# Clear ORS cache (restart dev server)
-# (Cache is in-memory only)
-```
-
-## Security Best Practices
-
-### Data Protection
-**Always mask sensitive data:**
-```typescript
-import { maskEmail, maskPhoneNumber } from '@/utils/dataMasking';
-import { getUserFriendlyError } from '@/utils/errorSanitization';
-
-// Mask in display
-<p>Email: {maskEmail(user.email)}</p>
-
-// Handle errors securely
-try {
-  await operation();
-} catch (error) {
-  toast.error(getUserFriendlyError(error));  // User-friendly Indonesian message
-  logError('Context', error);  // Only logs in development
-}
-```
-
-**Use masked queries:**
-```typescript
-import { getUserBookingsWithMasking } from '@/utils/supabaseHelpers';
-
-// Auto-masks emails/phones for non-admin users
-const bookings = await getUserBookingsWithMasking(userId, !isAdmin);
-```
-
-### Error Handling
-- **Production:** Generic error messages only (no stack traces)
-- **Development:** Full error details for debugging
-- **Never expose:** Database structure, API keys, internal IDs, stack traces
-
-### Security Headers
-All configured in `vercel.json`:
-- ✅ X-Frame-Options: DENY (prevents clickjacking)
-- ✅ X-Content-Type-Options: nosniff (prevents MIME sniffing)
-- ✅ X-XSS-Protection: enabled
-- ✅ Content-Security-Policy: restricts resource loading
-- ✅ CORS: restricted to trusted origins only
-
-**Docs:** `docs/SECURITY_FIXES_2025-11-03.md`, `docs/SECURITY_USAGE_EXAMPLES.md`
-
-## Documentation References
-- **Setup:** `docs/QUICK_START.md`, `docs/SUPABASE_SETUP.md`
-- **Admin:** `docs/ADMIN_DASHBOARD.md`, `docs/ADMIN_TESTING_GUIDE.md`
-- **APIs:** `docs/EXTERNAL_APIS.md`, `docs/MIDTRANS_INTEGRATION.md`
-- **ML:** `docs/ML_PIPELINE.md`, `docs/ML_IMPLEMENTATION_SUMMARY.md`
-- **Features:** `docs/GUEST_MODE.md`, `docs/MULTI_LANGUAGE.md`, `docs/BOOKING_REFUND_SYSTEM.md`
-- **Deployment:** `docs/DEPLOY_VERCEL.md`
-
-## Key Design Decisions
-
-### Why Bun over npm?
-Faster installation (2-3x speedup) but npm still supported. Use `bun install && bun run dev`.
-
-### Why OpenRouteService instead of Google Maps?
-Free tier: 2,000 req/day vs 200 req/day. Easy upgrade path if needed. Good Indonesia coverage.
-
-### Why in-memory cache over Redis?
-Simplicity for MVP. 70% hit rate in testing. Lost on restart is acceptable. Production upgrade path documented.
-
-### Why TensorFlow.js over server-side ML?
-Browser-side inference = no ML server costs. Model is small (< 1MB). Fallback to rule-based ensures reliability.
-
-### Why shadcn/ui?
-Copy-paste components (no package bloat), full Tailwind control, excellent TypeScript support, Radix UI accessibility.
-
-### Why guest mode instead of forced login?
-Lower friction for exploration. Convert to signup only when needed (booking, planning). Guest banner prompts registration.
-
----
-
-**Built by:** Sabilillah Ramaniya Widodo (sblrm) & Ryan Hanif Dwihandoyo (Rayen142)  
-**Last Updated:** October 31, 2025  
-**Version:** 2.0
+### Common Errors
+- **"PostGIS not enabled"**: Dashboard → Database → Extensions → Enable `postgis`
+- **"RLS policy violation"**: Check table policies or use service_role key
+- **"Missing API key"**: Ensure `.env.local` vars match docs, restart dev server
+
+## Security Guidelines
+- **Never** commit `.env.local` or expose `SUPABASE_SERVICE_ROLE_KEY`
+- **Always** use `VITE_` prefix for client-safe env vars
+- **Sanitize** errors in production (see `src/utils/errorSanitization.ts`)
+- **Mask** sensitive data (emails, phones) with `src/utils/dataMasking.ts`
+- **Validate** inputs with Zod schemas before DB operations
+- **RLS**: Every table must have policies (no public read/write by default)
+
+## Key Files to Review
+- `docs/QUICK_START.md` - Setup walkthrough
+- `docs/ARCHITECTURE_DIAGRAM.md` - Visual system architecture
+- `docs/ALGORITHMS.md` - A* implementation details
+- `docs/ADMIN_DASHBOARD.md` - Admin feature documentation
+- `docs/MIDTRANS_INTEGRATION.md` - Payment flow
+- `supabase/complete-setup.sql` - Full schema + RLS policies
+- `src/App.tsx` - Route definitions and context providers
+- `src/lib/supabase.ts` - Database types and helper functions
+
+## When Adding Features
+1. **Database**: Add migration in `supabase/migrations/`, update RLS policies
+2. **Types**: Regenerate types with `supabase gen types typescript` or update `src/lib/database.types.ts`
+3. **Service**: Create service file in `src/services/` for business logic
+4. **Page/Component**: Build UI in `src/pages/` or `src/components/`
+5. **Route**: Add to `App.tsx` Routes, protect with auth if needed
+6. **i18n**: Update all locale files in `src/locales/`
+7. **Test**: Use `bun run test:*` commands to verify
