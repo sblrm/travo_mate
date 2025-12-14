@@ -85,8 +85,16 @@ export interface RefundResult {
   refund_percentage?: number;
 }
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Get Supabase credentials from env or fallback to empty (will show error)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('⚠️ Supabase credentials not found!');
+  console.error('Please check your .env file or build configuration');
+  console.error('VITE_SUPABASE_URL:', supabaseUrl ? '✓ Set' : '✗ Missing');
+  console.error('VITE_SUPABASE_ANON_KEY:', supabaseKey ? '✓ Set' : '✗ Missing');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -260,6 +268,16 @@ export const createTicket = async ({
  * For "My Booking" page - shows upcoming trips
  */
 export const getUserBookings = async (userId: string) => {
+  // First, update expired bookings to 'used' status
+  const today = new Date().toISOString().split('T')[0];
+  await supabase
+    .from('bookings')
+    .update({ status: 'used' })
+    .eq('user_id', userId)
+    .in('status', ['confirmed', 'paid'])
+    .lt('visit_date', today); // visit_date < today
+
+  // Then fetch only upcoming bookings
   const { data, error } = await supabase
     .from('bookings')
     .select(`
@@ -280,6 +298,7 @@ export const getUserBookings = async (userId: string) => {
     `)
     .eq('user_id', userId)
     .in('status', ['pending_payment', 'paid', 'confirmed']) // Only active bookings
+    .gte('visit_date', today) // visit_date >= today (upcoming only)
     .order('visit_date', { ascending: true }); // Soonest first
 
   if (error) throw error;

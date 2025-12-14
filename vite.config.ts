@@ -17,4 +17,21 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase': ['@supabase/supabase-js'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+        }
+      }
+    }
+  },
+  // Optimize for mobile
+  optimizeDeps: {
+    exclude: ['@capacitor/core', '@capacitor/android', '@capacitor/ios'],
+  },
 });

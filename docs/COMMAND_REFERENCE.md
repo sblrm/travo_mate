@@ -24,7 +24,7 @@ Gunakan panduan ini jika Anda menggunakan **npm** instead of **Bun**.
 | Test destinations | `bun run test:destinations` | `npm run test:destinations` |
 | Setup verification | `bun run setup:check` | `npm run setup:check` |
 
-## CulturalTrip Specific Commands
+## TravoMate Specific Commands
 
 ### Setup & Configuration
 
@@ -88,4 +88,4 @@ See [docs/INSTALL_BUN.md](./INSTALL_BUN.md) for installation guide.
 - Your team uses npm
 - You don't want to install another tool
 
-Both work perfectly fine for CulturalTrip! 🎉
+Both work perfectly fine for TravoMate! 🎉

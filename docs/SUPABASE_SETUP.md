@@ -1,6 +1,6 @@
-# 🗄️ Panduan Setup Database Supabase - CulturalTrip
+# 🗄️ Panduan Setup Database Supabase - TravoMate
 
-Dokumen ini berisi langkah-langkah lengkap untuk setup database Supabase untuk aplikasi CulturalTrip.
+Dokumen ini berisi langkah-langkah lengkap untuk setup database Supabase untuk aplikasi TravoMate.
 
 ## 📋 Prasyarat
 
@@ -15,7 +15,7 @@ Dokumen ini berisi langkah-langkah lengkap untuk setup database Supabase untuk a
 1. Login ke [Supabase Dashboard](https://app.supabase.com)
 2. Klik "New Project"
 3. Isi detail project:
-   - **Name**: CulturalTrip (atau nama yang Anda inginkan)
+   - **Name**: TravoMate (atau nama yang Anda inginkan)
    - **Database Password**: Simpan password ini dengan aman!
    - **Region**: Pilih region terdekat (Southeast Asia - Singapore)
 4. Klik "Create new project" dan tunggu hingga selesai (~2 menit)

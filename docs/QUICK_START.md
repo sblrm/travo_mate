@@ -1,6 +1,6 @@
 # 🚀 Quick Start - Supabase Setup
 
-Setup database Supabase untuk CulturalTrip dalam 5 menit!
+Setup database Supabase untuk TravoMate dalam 5 menit!
 
 ## Langkah Cepat
 

@@ -368,12 +368,24 @@ async function handleTransactionNotification(notification: any, res: VercelRespo
         if (txError || !transaction) {
           console.error('Failed to get transaction details:', txError);
         } else {
-          // Extract destination ID from trip_data_id or item_details
-          let destinationId = transaction.trip_data_id;
+          // Extract destination ID from custom_field2 (new) or trip_data_id (legacy)
+          let destinationId = transaction.custom_field2 || transaction.trip_data_id;
           
-          // If not in trip_data_id, try to parse from item_details
-          if (!destinationId && transaction.item_details && Array.isArray(transaction.item_details)) {
-            const firstItem = transaction.item_details[0];
+          // Parse item_details (stored as JSON string in database)
+          let itemDetails: any[] = [];
+          try {
+            if (transaction.item_details) {
+              itemDetails = typeof transaction.item_details === 'string' 
+                ? JSON.parse(transaction.item_details)
+                : transaction.item_details;
+            }
+          } catch (e) {
+            console.error('Failed to parse item_details:', e);
+          }
+          
+          // If destination ID not found, try to parse from item_details
+          if (!destinationId && itemDetails.length > 0) {
+            const firstItem = itemDetails[0];
             if (firstItem && firstItem.id) {
               // Extract ID from format "DEST-123" or just "123"
               const match = String(firstItem.id).match(/\d+/);
@@ -383,16 +395,24 @@ async function handleTransactionNotification(notification: any, res: VercelRespo
             }
           }
           
+          // Extract visit date from custom_field1
+          const visitDate = transaction.custom_field1;
+          
+          // Get quantity from parsed item_details
+          const quantity = itemDetails[0]?.quantity || 1;
+          
+          console.log('Booking data:', { destinationId, quantity, visitDate, grossAmount: transaction.gross_amount });
+          
           if (destinationId && transaction.user_id) {
-            const quantity = transaction.item_details?.[0]?.quantity || 1;
             
-            // Create booking record
+            // Create booking record with visit_date
             const { data: booking, error: bookingError } = await supabase
               .from('bookings')
               .insert({
                 user_id: transaction.user_id,
                 destination_id: destinationId,
                 booking_date: new Date().toISOString().split('T')[0],
+                visit_date: visitDate || new Date().toISOString().split('T')[0], // Use visit_date from transaction
                 quantity: quantity,
                 total_price: transaction.gross_amount,
                 status: 'confirmed',

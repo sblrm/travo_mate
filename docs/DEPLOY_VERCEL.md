@@ -1,6 +1,6 @@
-# 🚀 Deploying CulturalTrip to Vercel
+# 🚀 Deploying TravoMate to Vercel
 
-This guide shows how to deploy the CulturalTrip (Vite + React) site to Vercel.
+This guide shows how to deploy the TravoMate (Vite + React) site to Vercel.
 
 ## Summary (what we'll do)
 - Create a Vercel project linked to this Git repo
@@ -10,7 +10,7 @@ This guide shows how to deploy the CulturalTrip (Vite + React) site to Vercel.
 
 ## 1) Create project on Vercel
 1. Go to https://vercel.com and sign in.
-2. Click "New Project" → "Import Git Repository" and select your `cultural-trip` repo.
+2. Click "New Project" → "Import Git Repository" and select your `travo-mate` repo.
 3. When Vercel detects the project it may auto-populate settings. Use the settings below if not auto-detected.
 
 ## 2) Environment Variables (must set)

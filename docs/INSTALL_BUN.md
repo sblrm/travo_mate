@@ -2,7 +2,7 @@
 
 ## Apa itu Bun?
 
-Bun adalah JavaScript runtime & package manager yang sangat cepat (alternatif npm/yarn). CulturalTrip menggunakan Bun untuk dependency management.
+Bun adalah JavaScript runtime & package manager yang sangat cepat (alternatif npm/yarn). TravoMate menggunakan Bun untuk dependency management.
 
 ## Cara Install Bun di Windows
 

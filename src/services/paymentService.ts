@@ -185,15 +185,16 @@ const saveTransactionToDb = async (data: {
       item_details: data.itemDetails,
       transaction_time: new Date().toISOString(),
       custom_field1: data.metadata?.visitDate, // Store visit date for booking creation
+      custom_field2: data.metadata?.tripDataId ? String(data.metadata.tripDataId) : null, // Store destination ID
     });
 
     if (error) {
       console.error('Failed to save transaction to database:', error);
-      // Don't throw - payment can still proceed
+      throw new Error('Failed to save transaction: ' + error.message);
     }
   } catch (error) {
     console.error('Database save error:', error);
-    // Don't throw - payment can still proceed
+    throw error; // Now throws error to prevent payment if DB save fails
   }
 };
 

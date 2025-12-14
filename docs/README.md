@@ -1,6 +1,6 @@
-# 📚 CulturalTrip Documentation
+# 📚 TravoMate Documentation
 
-Dokumentasi lengkap untuk setup dan development CulturalTrip.
+Dokumentasi lengkap untuk setup dan development TravoMate.
 
 ## 🚀 Quick Links
 
@@ -18,7 +18,7 @@ Dokumentasi lengkap untuk setup dan development CulturalTrip.
 ### 1. Setup Guides
 
 #### [Quick Start Guide](./QUICK_START.md)
-Panduan cepat untuk setup CulturalTrip dalam 5 menit.
+Panduan cepat untuk setup TravoMate dalam 5 menit.
 
 **Apa yang dipelajari:**
 - Install dependencies (npm/Bun)
@@ -123,7 +123,7 @@ npm run test:connection
 ## 📂 Project Structure
 
 ```
-CulturalTrip/
+TravoMate/
 ├── docs/                          # 📚 Documentation
 │   ├── README.md                  # This file
 │   ├── QUICK_START.md            # 5-minute setup guide
@@ -161,7 +161,7 @@ CulturalTrip/
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/sblrm/cultural-trip/issues)
+- **Issues**: [GitHub Issues](https://github.com/sblrm/travo-mate/issues)
 - **Email**: subhan.larasati@gmail.com
 
 ---

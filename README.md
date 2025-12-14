@@ -9,12 +9,17 @@
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-119EFF?style=for-the-badge&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
+[![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
+[![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=ios&logoColor=white)](https://www.apple.com/ios/)
 
 </div>
 
 ## 🌟 Overview
 
-**TravoMate** is a modern web application that helps users explore and plan trips to Indonesia's rich cultural heritage sites. Built with cutting-edge technologies, this platform combines interactive mapping, AI-powered trip planning, and comprehensive cultural information to create an immersive travel planning experience.
+**TravoMate** is a modern **web and mobile application** that helps users explore and plan trips to Indonesia's rich cultural heritage sites. Built with cutting-edge technologies, this platform combines interactive mapping, AI-powered trip planning, and comprehensive cultural information to create an immersive travel planning experience.
+
+> 📱 **Now available as native mobile app!** Built with Capacitor for iOS and Android.
 
 > 🎯 **Built by**: [Sabilillah Ramaniya Widodo (sblrm)](https://github.com/sblrm) & [Ryan Hanif Dwihandoyo (Rayen142)](https://github.com/Rayen142)
 > 📅 **Project Timeline**: 2024 - Present  
@@ -73,11 +78,11 @@
 
 <div align="center">
 
-| Frontend | Backend & Database | AI & APIs | Development |
-|----------|-------------------|-----------|-------------|
-| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react&logoColor=white) | ![Supabase](https://img.shields.io/badge/-Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white) | ![Google AI](https://img.shields.io/badge/-Gemini_AI-4285F4?style=flat-square&logo=google&logoColor=white) | ![Vite](https://img.shields.io/badge/-Vite-646CFF?style=flat-square&logo=vite&logoColor=white) |
-| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) | ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white) | ![Leaflet](https://img.shields.io/badge/-Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white) | ![ESLint](https://img.shields.io/badge/-ESLint-4B32C3?style=flat-square&logo=eslint&logoColor=white) |
-| ![Tailwind](https://img.shields.io/badge/-Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) | ![PostGIS](https://img.shields.io/badge/-PostGIS-336791?style=flat-square&logo=postgresql&logoColor=white) | ![OpenStreetMap](https://img.shields.io/badge/-OpenStreetMap-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white) | ![Bun](https://img.shields.io/badge/-Bun-000000?style=flat-square&logo=bun&logoColor=white) |
+| Frontend | Backend & Database | AI & APIs | Mobile | Development |
+|----------|-------------------|-----------|--------|-------------|
+| ![React](https://img.shields.io/badge/-React-61DAFB?style=flat-square&logo=react&logoColor=white) | ![Supabase](https://img.shields.io/badge/-Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white) | ![Google AI](https://img.shields.io/badge/-Gemini_AI-4285F4?style=flat-square&logo=google&logoColor=white) | ![Capacitor](https://img.shields.io/badge/-Capacitor-119EFF?style=flat-square&logo=capacitor&logoColor=white) | ![Vite](https://img.shields.io/badge/-Vite-646CFF?style=flat-square&logo=vite&logoColor=white) |
+| ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) | ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white) | ![Leaflet](https://img.shields.io/badge/-Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white) | ![Android](https://img.shields.io/badge/-Android-3DDC84?style=flat-square&logo=android&logoColor=white) | ![ESLint](https://img.shields.io/badge/-ESLint-4B32C3?style=flat-square&logo=eslint&logoColor=white) |
+| ![Tailwind](https://img.shields.io/badge/-Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) | ![PostGIS](https://img.shields.io/badge/-PostGIS-336791?style=flat-square&logo=postgresql&logoColor=white) | ![OpenStreetMap](https://img.shields.io/badge/-OpenStreetMap-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white) | ![iOS](https://img.shields.io/badge/-iOS-000000?style=flat-square&logo=ios&logoColor=white) | ![Bun](https://img.shields.io/badge/-Bun-000000?style=flat-square&logo=bun&logoColor=white) |
 
 </div>
 
@@ -94,8 +99,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/sblrm/cultural-trip.git
-cd cultural-trip
+git clone https://github.com/sblrm/travo-mate.git
+cd travo-mate
 
 # Install dependencies (using Bun for faster installation)
 bun install
@@ -106,6 +111,10 @@ cp .env.example .env.local
 
 # Start development server
 bun run dev
+
+# For mobile development
+npm run mobile:dev:android  # Android
+npm run mobile:dev:ios      # iOS (Mac only)
 ```
 
 ### Environment Setup
@@ -127,15 +136,15 @@ VITE_GEMINI_API_KEY=your_gemini_api_key
 
 ### 🏠 Homepage - Jelajahi Keindahan Budaya Indonesia
 *Interactive cultural heritage map with stunning Indonesian landscapes*
-![Homepage](docs/screenshots/homepage.png)
+![Homepage](screenshots/homepage.png)
 
 ### 🗺️ Destinasi Budaya - Explore Cultural Sites  
 *Browse and discover Indonesia's rich cultural destinations with detailed information*
-![Cultural Destinations](docs/screenshots/destinations.png)
+![Cultural Destinations](screenshots/destinations.png)
 
 ### 🤖 AI Trip Planner - Rencanakan Rute Wisata Budaya
 *AI-powered trip planning with real-time chat assistance and intelligent route optimization*
-![Trip Planner](docs/screenshots/trip-planner.png)
+![Trip Planner](screenshots/trip-planner.png)
 
 </div>
 
@@ -235,6 +244,31 @@ npm run import:destinations scripts/destinations-template.csv
 - `scripts/add-destinations-from-csv.sql` - SQL template
 
 **📚 Full Documentation:** See [docs/ADD_DESTINATIONS.md](docs/ADD_DESTINATIONS.md) for complete guide with examples and troubleshooting.
+
+---
+
+## 📱 Mobile Development
+
+TravoMate now supports **native mobile deployment** with Capacitor!
+
+### Quick Mobile Commands
+```bash
+npm run mobile:build       # Build web + sync to native platforms
+npm run mobile:dev:android # Build & run on Android
+npm run mobile:dev:ios     # Build & run on iOS (Mac only)
+npm run cap:open:android   # Open in Android Studio
+npm run cap:open:ios       # Open in Xcode
+```
+
+### Features on Mobile
+- ✅ Native GPS tracking
+- ✅ Camera integration
+- ✅ Push notifications
+- ✅ Offline support
+- ✅ Native splash screen & status bar
+- ✅ Works on Android 7.0+ and iOS 13.0+
+
+**📱 Mobile Guide:** See [MOBILE_README.md](MOBILE_README.md) and [docs/CAPACITOR_MOBILE_SETUP.md](docs/CAPACITOR_MOBILE_SETUP.md) for complete setup.
 
 ---
 

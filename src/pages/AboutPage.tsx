@@ -7,7 +7,7 @@ const AboutPage = () => {
   return (
     <div className="container mx-auto py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Tentang Cultural Trip</h1>
+        <h1 className="text-4xl font-bold mb-4">Tentang TravoMate</h1>
         <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
           Kami adalah platform yang membantu wisatawan menemukan dan merencanakan
           perjalanan budaya di seluruh Indonesia dengan cara yang mudah dan terpersonalisasi.
@@ -18,7 +18,7 @@ const AboutPage = () => {
         <div>
           <h2 className="text-2xl font-bold mb-4">Misi Kami</h2>
           <p className="text-muted-foreground mb-6">
-            Cultural Trip didirikan dengan misi untuk melestarikan dan mempromosikan 
+            TravoMate didirikan dengan misi untuk melestarikan dan mempromosikan 
             kekayaan budaya Indonesia melalui teknologi. Kami ingin memudahkan para 
             wisatawan lokal dan mancanegara untuk menjelajahi warisan budaya yang 
             beragam di seluruh nusantara.
@@ -38,7 +38,7 @@ const AboutPage = () => {
             mendatang.
           </p>
           <p className="text-muted-foreground">
-            Cultural Trip berusaha menjadi jembatan digital antara warisan budaya 
+            TravoMate berusaha menjadi jembatan digital antara warisan budaya 
             Indonesia dengan teknologi modern, memastikan bahwa kisah-kisah sejarah 
             dan tradisi kita terus hidup dan dapat diakses oleh semua orang, di 
             mana pun mereka berada.
@@ -47,7 +47,7 @@ const AboutPage = () => {
       </div>
 
       <div className="bg-primary/5 dark:bg-primary/10 rounded-lg p-8 mb-16">
-        <h2 className="text-2xl font-bold text-center mb-8">Mengapa Memilih Cultural Trip?</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">Mengapa Memilih TravoMate?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardContent className="pt-6">

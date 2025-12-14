@@ -63,4 +63,11 @@ Homestead.json
 auth.json
 docs/SETUP_ENV_VARIABLES.md
 setup-env.ps1
-copilot-instructions.md
+
+# Capacitor / Mobile
+android/
+ios/
+.capacitor/
+capacitor.config.json
+SECURITY.md
+docs/

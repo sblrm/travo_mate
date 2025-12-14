@@ -23,7 +23,7 @@ Production-ready Machine Learning pipeline for intelligent trip cost prediction 
 ## 📁 Project Structure
 
 ```
-CulturalTrip/
+TravoMate/
 ├── src/
 │   ├── services/
 │   │   ├── mlDataCollection.ts      # Data collection & logging

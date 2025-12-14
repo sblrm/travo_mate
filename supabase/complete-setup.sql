@@ -1,5 +1,5 @@
 -- ============================================================================
--- CulturalTrip - Complete Database Setup Script
+-- TravoMate - Complete Database Setup Script
 -- ============================================================================
 -- Jalankan script ini di Supabase SQL Editor untuk setup database lengkap
 -- 
